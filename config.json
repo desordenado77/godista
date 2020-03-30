@@ -4,7 +4,7 @@
       "path_for_client": "/home/gorkag"
     },
     "server": {
-        "ip": "192.168.XXX.XXX",
+        "ip": "127.0.0.1",
         "port": 19000
     },
     "apps": [

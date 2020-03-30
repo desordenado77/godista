@@ -1,15 +1,18 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
 	"os/user"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/pborman/getopt"
@@ -188,6 +191,7 @@ func main() {
 	optVerbose := getopt.IntLong("Verbose", 'v', 0, "Set verbosity: 0 to 3. Verbose set to -1 everything goes to stderr. This is used for the cd case in which the output of the application goes to cd.")
 	optCommand := getopt.StringLong("Command", 'c', "", "Command to send")
 	optParams := getopt.StringLong("Params", 'p', "", "Command parameters")
+	optServer := getopt.BoolLong("Server", 's', "Server Mode")
 
 	getopt.Parse()
 
@@ -225,6 +229,39 @@ func main() {
 		os.Exit(1)
 	}
 
+	if *optServer {
+		ln, err := net.Listen("tcp", ":"+strconv.Itoa(godista.conf.Server.Port))
+		if err != nil {
+			// handle error
+			Error.Println("Network Error:", err)
+			os.Exit(1)
+		}
+		for {
+			conn, err := ln.Accept()
+			if err != nil {
+				// handle error
+			}
+			go func(c net.Conn) {
+				defer c.Close()
+				buf := make([]byte, 2048)
+				_, err := c.Read(buf)
+				if err != nil {
+					Error.Println("Network Error:", err)
+					os.Exit(1)
+				}
+				fmt.Println("Received:", string(buf))
+
+				runCommand(string(buf))
+
+				fmt.Fprintf(c, "Received\n")
+
+				c.Close()
+			}(conn)
+		}
+		os.Exit(0)
+
+	}
+
 	if *optCommand != "" {
 		Trace.Println("Non Empty command", *optCommand)
 		godista.currentApp = godista.findApp(*optCommand)
@@ -234,17 +271,17 @@ func main() {
 			os.Exit(1)
 		}
 
+		newParams := *optParams
 		if *optParams != "" {
 			regex := godista.currentApp.Params
 			Trace.Println("Regex for Command", *optCommand, "is", regex)
 
 			if regex != "" {
 				re := regexp.MustCompile(regex)
-				
+
 				matches := re.FindAllStringSubmatch(*optParams, -1)
 
-				newParams := *optParams
-				for i,e := range matches[0] {
+				for i, e := range matches[0] {
 					if i == 0 {
 						continue
 					}
@@ -254,7 +291,18 @@ func main() {
 				Trace.Println("New Params:", newParams)
 			}
 		}
-
+		conn, err := net.Dial("tcp", godista.conf.Server.Ip+":"+strconv.Itoa(godista.conf.Server.Port))
+		if err != nil {
+			Error.Println("Error connecting to", godista.conf.Server.Ip+":"+strconv.Itoa(godista.conf.Server.Port), err)
+			os.Exit(1)
+		}
+		fmt.Fprintf(conn, godista.currentApp.Cmd+" "+newParams+"\n")
+		Trace.Println("Sent")
+		status, err := bufio.NewReader(conn).ReadString('\n')
+		if err == nil {
+			fmt.Println(status)
+		} else {
+			Error.Println("Network error:", err)
+		}
 	}
-
 }
