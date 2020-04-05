@@ -30,7 +30,7 @@ type ClientCfg struct {
 }
 
 type ServerCfg struct {
-	Ip   string `json:"ip"`
+	Ip   string `json:"ip_file"`
 	Port int    `json:"port"`
 }
 
@@ -48,6 +48,7 @@ type Config struct {
 
 type Godista struct {
 	conf       Config
+	ip         string
 	currentApp *AppCfg
 }
 
@@ -158,9 +159,87 @@ func (godista *Godista) ParseConfig() (err error) {
 		return err
 	}
 
+	dat, err := ioutil.ReadFile(godista.conf.Client.PathForClient + "/" + godista.conf.Server.Ip)
+	if err != nil {
+		Error.Println("Unable to read file: " + godista.conf.Server.Ip)
+		Error.Println(err)
+		return err
+	}
+
+	godista.ip = string(dat)
+
+	Trace.Println("Server IP address", godista.ip)
+
 	Trace.Println(godista.conf)
 
 	return nil
+}
+
+func (godista *Godista) IPMenu(r *bufio.Reader) {
+	var s []net.IP
+
+	fmt.Println("\n------------------------------------")
+	fmt.Println("Select IP address:")
+	fmt.Println("")
+	ifaces, _ := net.Interfaces()
+
+	k := 0
+	for _, i := range ifaces {
+		addrs, _ := i.Addrs()
+		// handle err
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			s = append(s, ip)
+			// process IP address
+			fmt.Printf("%d) %s\n", k, ip)
+			k = k + 1
+		}
+	}
+	fmt.Println("")
+	fmt.Println("Select IP Address?")
+	text, _ := r.ReadString('\n')
+	text = strings.Replace(strings.ToLower(text), "\n", "", -1)
+	i, err := strconv.Atoi(text)
+	if err == nil && i >= 0 && i < len(s) {
+		fmt.Println("IP Selected", s[i])
+
+		ip_byte := []byte(string(s[i].String()))
+		err := ioutil.WriteFile(godista.conf.Client.PathForServer+pathSeparator()+godista.conf.Server.Ip, ip_byte, 0644)
+		if err != nil {
+			Error.Println("Error Writing to file", err)
+			os.Exit(1)
+		}
+
+	} else {
+		fmt.Println("Incorrect IP selected")
+	}
+
+}
+
+func (godista *Godista) MainMenu(r *bufio.Reader) {
+	fmt.Println("\n------------------------------------")
+	fmt.Println("Main Menu\n")
+	fmt.Println("0) Renew IP Address")
+	fmt.Println("1) Exit")
+	fmt.Println("")
+	fmt.Println("Select Option?")
+	text, _ := r.ReadString('\n')
+	text = strings.Replace(strings.ToLower(text), "\n", "", -1)
+
+	if text == "0" {
+		godista.IPMenu(r)
+	}
+
+	if text == "1" {
+		os.Exit(0)
+	}
+
 }
 
 func usage() {
@@ -236,27 +315,33 @@ func main() {
 			Error.Println("Network Error:", err)
 			os.Exit(1)
 		}
-		for {
-			conn, err := ln.Accept()
-			if err != nil {
-				// handle error
-			}
-			go func(c net.Conn) {
-				defer c.Close()
-				buf := make([]byte, 2048)
-				_, err := c.Read(buf)
+		go func() {
+			for {
+				conn, err := ln.Accept()
 				if err != nil {
 					Error.Println("Network Error:", err)
 					os.Exit(1)
 				}
-				fmt.Println("Received:", string(buf))
+				go func(c net.Conn) {
+					defer c.Close()
+					buf := make([]byte, 2048)
+					_, err := c.Read(buf)
+					if err != nil {
+						Error.Println("Network Error:", err)
+						os.Exit(1)
+					}
+					fmt.Println("Received:", string(buf))
 
-				runCommand(string(buf))
+					runCommand(string(buf), c)
 
-				fmt.Fprintf(c, "Received\n")
+					c.Close()
+				}(conn)
+			}
+		}()
 
-				c.Close()
-			}(conn)
+		reader := bufio.NewReader(os.Stdin)
+		for {
+			godista.MainMenu(reader)
 		}
 		os.Exit(0)
 
@@ -291,9 +376,9 @@ func main() {
 				Trace.Println("New Params:", newParams)
 			}
 		}
-		conn, err := net.Dial("tcp", godista.conf.Server.Ip+":"+strconv.Itoa(godista.conf.Server.Port))
+		conn, err := net.Dial("tcp", godista.ip+":"+strconv.Itoa(godista.conf.Server.Port))
 		if err != nil {
-			Error.Println("Error connecting to", godista.conf.Server.Ip+":"+strconv.Itoa(godista.conf.Server.Port), err)
+			Error.Println("Error connecting to", godista.ip+":"+strconv.Itoa(godista.conf.Server.Port), err)
 			os.Exit(1)
 		}
 		fmt.Fprintf(conn, godista.currentApp.Cmd+" "+newParams+"\n")
@@ -302,7 +387,9 @@ func main() {
 		if err == nil {
 			fmt.Println(status)
 		} else {
-			Error.Println("Network error:", err)
+			if err != io.EOF {
+				Error.Println("Network error:", err)
+			}
 		}
 	}
 }
