@@ -101,7 +101,7 @@ func (godista *Godista) replacePath(str string) (path string) {
 		os.Exit(1)
 	}
 	abs = strings.Replace(abs, godista.conf.Client.PathForClient, godista.conf.Client.PathForServer, 1)
-	abs = strings.Replace(abs, "/", "\\", -1)
+	abs = strings.Replace(abs, "/", pathSeparator(), -1)
 
 	return abs
 
@@ -332,7 +332,7 @@ func main() {
 					}
 					fmt.Println("Received:", string(buf))
 
-					runCommand(string(buf), c)
+					runCommand(strings.TrimRight(strings.TrimRight(string(buf), "\x00"), "\n"), c)
 
 					c.Close()
 				}(conn)

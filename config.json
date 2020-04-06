@@ -10,7 +10,7 @@
     "apps": [
       {
         "name": "edit",
-        "cmd": "editCommand",
+        "cmd": "gedit",
         "params": "^([\\S]+)"
       },
       {

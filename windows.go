@@ -8,15 +8,16 @@ import (
 	"os/exec"
 )
 
-func runCommand(cmd string, c net.Conn) {
-	fmt.Println("-------- ", cmd)
-	cmd = exec.Command(cmd)
+func runCommand(cmdStr string, c net.Conn) {
+	var cmd *exec.Cmd
+	fmt.Println("-------- ", cmdStr)
+	cmd = exec.Command(cmdStr)
 	err := cmd.Start()
 	if err != nil {
 		Error.Println(err)
-		c.Write([]byte(err))
+		c.Write([]byte(err.Error() + "\n"))
 	} else {
-		c.Write([]byte(""))
+		c.Write([]byte("\n"))
 	}
 }
 
