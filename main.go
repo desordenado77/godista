@@ -161,9 +161,10 @@ func (godista *Godista) ParseConfig(s bool) (err error) {
 
 	var ipPath string
 	if s {
-		ipPath = godista.conf.Client.PathForClient + "/" + godista.conf.Server.Ip
-	} else {
 		ipPath = godista.conf.Client.PathForServer + pathSeparator() + godista.conf.Server.Ip
+		ipPath = strings.Replace(ipPath, "/", pathSeparator(), -1)
+	} else {
+		ipPath = godista.conf.Client.PathForClient + "/" + godista.conf.Server.Ip
 	}
 
 	dat, err := ioutil.ReadFile(ipPath)
