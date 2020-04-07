@@ -107,7 +107,7 @@ func (godista *Godista) replacePath(str string) (path string) {
 
 }
 
-func (godista *Godista) ParseConfig(s bool) (err error) {
+func (godista *Godista) ParseConfig(s bool, p string) (err error) {
 
 	// read config file from:
 	// 1. GODISTA_CONF env variable
@@ -116,7 +116,15 @@ func (godista *Godista) ParseConfig(s bool) (err error) {
 
 	var jsonFile *os.File
 
-	c, exist := os.LookupEnv(CONFIGENV)
+	var c string
+	var exist bool
+
+	if p != "" {
+		c = p
+		exist = true
+	} else {
+		c, exist = os.LookupEnv(CONFIGENV)
+	}
 
 	if exist {
 		jsonFile, err = os.Open(c + "/" + CONFIG_FILENAME)
@@ -279,6 +287,7 @@ func main() {
 	optCommand := getopt.StringLong("Command", 'c', "", "Command to send")
 	optParams := getopt.StringLong("Params", 'p', "", "Command parameters")
 	optServer := getopt.BoolLong("Server", 's', "Server Mode")
+	optConfigPath := getopt.StringLong("config", 'f', "", "Path to config file. Ideal to use for server mode.")
 
 	getopt.Parse()
 
@@ -310,7 +319,7 @@ func main() {
 
 	InitLogs(vt, vi, vw, os.Stderr)
 
-	err = godista.ParseConfig(*optServer)
+	err = godista.ParseConfig(*optServer, *optConfigPath)
 	if err != nil {
 		Error.Println("Exiting")
 		os.Exit(1)
