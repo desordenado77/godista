@@ -107,7 +107,7 @@ func (godista *Godista) replacePath(str string) (path string) {
 
 }
 
-func (godista *Godista) ParseConfig() (err error) {
+func (godista *Godista) ParseConfig(s bool) (err error) {
 
 	// read config file from:
 	// 1. GODISTA_CONF env variable
@@ -159,7 +159,14 @@ func (godista *Godista) ParseConfig() (err error) {
 		return err
 	}
 
-	dat, err := ioutil.ReadFile(godista.conf.Client.PathForClient + "/" + godista.conf.Server.Ip)
+	var ipPath string
+	if s {
+		ipPath = godista.conf.Client.PathForClient + "/" + godista.conf.Server.Ip
+	} else {
+		ipPath = godista.conf.Client.PathForServer + pathSeparator() + godista.conf.Server.Ip
+	}
+
+	dat, err := ioutil.ReadFile(ipPath)
 	if err != nil {
 		Error.Println("Unable to read file: " + godista.conf.Server.Ip)
 		Error.Println(err)
@@ -302,7 +309,7 @@ func main() {
 
 	InitLogs(vt, vi, vw, os.Stderr)
 
-	err = godista.ParseConfig()
+	err = godista.ParseConfig(*optServer)
 	if err != nil {
 		Error.Println("Exiting")
 		os.Exit(1)
