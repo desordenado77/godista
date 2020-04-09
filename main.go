@@ -349,7 +349,7 @@ func main() {
 					}
 					fmt.Println("Received:", string(buf))
 
-					runCommand(strings.TrimRight(strings.TrimRight(string(buf), "\x00"), "\n"), c)
+					godista.runCommand(strings.TrimRight(strings.TrimRight(string(buf), "\x00"), "\n"), c)
 
 					c.Close()
 				}(conn)
@@ -398,7 +398,7 @@ func main() {
 			Error.Println("Error connecting to", godista.ip+":"+strconv.Itoa(godista.conf.Server.Port), err)
 			os.Exit(1)
 		}
-		fmt.Fprintf(conn, godista.currentApp.Cmd+" "+newParams+"\n")
+		fmt.Fprintf(conn, godista.currentApp.Name+" "+newParams+"\n")
 		Trace.Println("Sent")
 		status, err := bufio.NewReader(conn).ReadString('\n')
 		if err == nil {

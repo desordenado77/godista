@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func runCommand(cmdStr string, c net.Conn) {
+func (godista *Godista) runCommand(cmdStr string, c net.Conn) {
 	var cmd *exec.Cmd
 
 	fmt.Printf("-------- '%s'\n", cmdStr)
