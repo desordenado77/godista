@@ -21,7 +21,9 @@ import (
 const CONFIGENV = "GODISTA_CONF"
 const CONFIG_FILENAME = "config.json"
 const GODISTA_SETTINGS_FOLDER_PATTERN = "%s/.godista/"
+const GODISTA_ALIAS_FILE = ".godista_alias"
 
+var GODISTA_HOME_FOLDER string
 var GODISTA_SETTINGS_FOLDER string
 
 type ClientCfg struct {
@@ -258,12 +260,28 @@ func (godista *Godista) MainMenu(r *bufio.Reader) {
 
 }
 
+func (godista *Godista) Install() {
+	Trace.Println("Create GoDista Alias file")
+	var alias string
+	for _, s := range godista.conf.Apps {
+		alias = alias + "alias dista" + s.Name + "='godista -c " + s.Cmd + " -p '\n"
+	}
+	// fmt.Println(alias)
+	err := ioutil.WriteFile(GODISTA_HOME_FOLDER+"/"+GODISTA_ALIAS_FILE, []byte(alias), 0644)
+	if err != nil {
+		Error.Println("Error Writing to file", err)
+		os.Exit(1)
+	}
+}
+
 func usage() {
 	w := os.Stdout
 
 	getopt.PrintUsage(w)
 
-	fmt.Println("Extended usage goes here")
+	fmt.Println("")
+	fmt.Println("Install will create a file named .godista_alias with 'alias dista<cmd_name>=godista -c <cmd_name> -p' for each command and will add calling this script from .bashrc.")
+	fmt.Println("The -p option will append any non-option command")
 }
 
 func main() {
@@ -279,6 +297,7 @@ func main() {
 	//fmt.Println(usr)
 
 	GODISTA_SETTINGS_FOLDER = fmt.Sprintf(GODISTA_SETTINGS_FOLDER_PATTERN, usr.HomeDir)
+	GODISTA_HOME_FOLDER = usr.HomeDir
 
 	getopt.SetUsage(usage)
 
@@ -288,6 +307,7 @@ func main() {
 	optParams := getopt.StringLong("Params", 'p', "", "Command parameters")
 	optServer := getopt.BoolLong("Server", 's', "Server Mode")
 	optConfigPath := getopt.StringLong("config", 'f', "", "Path to config file. Ideal to use for server mode.")
+	optInstall := getopt.BoolLong("Install", 'i', "Install godista")
 
 	getopt.Parse()
 
@@ -323,6 +343,11 @@ func main() {
 	if err != nil {
 		Error.Println("Exiting")
 		os.Exit(1)
+	}
+
+	if *optInstall {
+		Info.Println("Insalling godista")
+		godista.Install()
 	}
 
 	if *optServer {
@@ -374,6 +399,13 @@ func main() {
 		}
 
 		newParams := *optParams
+
+		if getopt.NArgs() > 0 {
+			for _, s := range getopt.Args() {
+				newParams = newParams + " " + s
+			}
+		}
+
 		if *optParams != "" {
 			regex := godista.currentApp.Params
 			Trace.Println("Regex for Command", *optCommand, "is", regex)
