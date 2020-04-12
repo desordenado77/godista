@@ -23,6 +23,14 @@ const CONFIG_FILENAME = "config.json"
 const GODISTA_SETTINGS_FOLDER_PATTERN = "%s/.godista/"
 const GODISTA_ALIAS_FILE = ".godista_alias"
 
+const GODISTA_BASHRC_INSTALL = `
+
+#################### godista Start ####################
+source ` + GODISTA_ALIAS_FILE + `
+####################  godista End  ####################
+
+`
+
 var GODISTA_HOME_FOLDER string
 var GODISTA_SETTINGS_FOLDER string
 
@@ -260,6 +268,44 @@ func (godista *Godista) MainMenu(r *bufio.Reader) {
 
 }
 
+func addGodistaAliasFile(fileName string) {
+	file, err := os.OpenFile(fileName, os.O_RDWR, 0644)
+	if err != nil {
+		Error.Println("failed opening file:", err)
+		os.Exit(1)
+	}
+
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+
+	for scanner.Scan() {
+		text := scanner.Text()
+		fmt.Println(text)
+		if strings.Contains(text, GODISTA_ALIAS_FILE) {
+			file.Close()
+			return
+		}
+	}
+
+	_, err = file.Seek(0, io.SeekEnd)
+	if err != nil {
+		Error.Println("failed seeking file:", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("write string", GODISTA_BASHRC_INSTALL)
+
+	_, err = file.WriteString(GODISTA_BASHRC_INSTALL)
+	if err != nil {
+		Error.Println("failed writing file:", err)
+		os.Exit(1)
+	}
+
+	file.Close()
+
+	return
+}
+
 func (godista *Godista) Install() {
 	Trace.Println("Create GoDista Alias file")
 	var alias string
@@ -272,6 +318,8 @@ func (godista *Godista) Install() {
 		Error.Println("Error Writing to file", err)
 		os.Exit(1)
 	}
+
+	addGodistaAliasFile(GODISTA_HOME_FOLDER + "/.bashrc")
 }
 
 func usage() {
