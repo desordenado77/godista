@@ -1,7 +1,7 @@
 {
     "client": {
       "path_for_server": "/home/gorkag",
-      "path_for_client": "/home/gorkag"
+      "path_for_client": "Y:\\"
     },
     "server": {
         "ip_file": ".godista/ip",
