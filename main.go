@@ -45,9 +45,10 @@ type ServerCfg struct {
 }
 
 type AppCfg struct {
-	Name   string `json:"name"`
-	Cmd    string `json:"cmd"`
-	Params string `json:"params"`
+	Name       string `json:"name"`
+	Cmd        string `json:"cmd"`
+	ExtraParam string `json:"extraParam"`
+	Params     string `json:"params"`
 }
 
 type Config struct {
@@ -478,7 +479,7 @@ func main() {
 			Error.Println("Error connecting to", godista.ip+":"+strconv.Itoa(godista.conf.Server.Port), err)
 			os.Exit(1)
 		}
-		fmt.Fprintf(conn, godista.currentApp.Name+" "+newParams+"\n")
+		fmt.Fprintf(conn, godista.currentApp.Name+" "+godista.currentApp.ExtraParam+newParams+"\n")
 		Trace.Println("Sent")
 		status, err := bufio.NewReader(conn).ReadString('\n')
 		if err == nil {
