@@ -232,6 +232,7 @@ func (godista *Godista) IPMenu(r *bufio.Reader) {
 	fmt.Println("Select IP Address?")
 	text, _ := r.ReadString('\n')
 	text = strings.Replace(strings.ToLower(text), "\n", "", -1)
+	text = strings.Replace(strings.ToLower(text), "\r", "", -1)
 	i, err := strconv.Atoi(text)
 	if err == nil && i >= 0 && i < len(s) {
 		fmt.Println("IP Selected", s[i])
@@ -258,6 +259,7 @@ func (godista *Godista) MainMenu(r *bufio.Reader) {
 	fmt.Println("Select Option?")
 	text, _ := r.ReadString('\n')
 	text = strings.Replace(strings.ToLower(text), "\n", "", -1)
+	text = strings.Replace(strings.ToLower(text), "\r", "", -1)
 
 	if text == "0" {
 		godista.IPMenu(r)
@@ -281,7 +283,6 @@ func addGodistaAliasFile(fileName string) {
 
 	for scanner.Scan() {
 		text := scanner.Text()
-		fmt.Println(text)
 		if strings.Contains(text, GODISTA_ALIAS_FILE) {
 			file.Close()
 			return
@@ -294,7 +295,6 @@ func addGodistaAliasFile(fileName string) {
 		os.Exit(1)
 	}
 
-	fmt.Println("write string", GODISTA_BASHRC_INSTALL)
 
 	_, err = file.WriteString(GODISTA_BASHRC_INSTALL)
 	if err != nil {
@@ -311,7 +311,7 @@ func (godista *Godista) Install() {
 	Trace.Println("Create GoDista Alias file")
 	var alias string
 	for _, s := range godista.conf.Apps {
-		alias = alias + "alias dista" + s.Name + "='godista -c " + s.Cmd + " -p '\n"
+		alias = alias + "alias dista" + s.Name + "='godista -c " + s.Name + " -p '\n"
 	}
 	// fmt.Println(alias)
 	err := ioutil.WriteFile(GODISTA_HOME_FOLDER+"/"+GODISTA_ALIAS_FILE, []byte(alias), 0644)
