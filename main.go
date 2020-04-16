@@ -421,7 +421,6 @@ func main() {
 						Error.Println("Network Error:", err)
 						os.Exit(1)
 					}
-					fmt.Println("Received:", string(buf))
 
 					godista.runCommand(strings.TrimRight(strings.TrimRight(string(buf), "\x00"), "\n"), c)
 
@@ -455,20 +454,28 @@ func main() {
 			}
 		}
 
-		if *optParams != "" {
+		if newParams != "" {
 			regex := godista.currentApp.Params
 			Trace.Println("Regex for Command", *optCommand, "is", regex)
 
 			if regex != "" {
 				re := regexp.MustCompile(regex)
 
-				matches := re.FindAllStringSubmatch(*optParams, -1)
+				matches := re.FindAllStringSubmatch(newParams, -1)
+				Trace.Println("Params:", newParams)
+				Trace.Println("regex:", regex)
+				Trace.Println("matches:", matches)
 
-				for i, e := range matches[0] {
-					if i == 0 {
-						continue
+				if len(matches) > 0 {
+					for i, e := range matches[0] {
+						if i == 0 {
+							continue
+						}
+						newParams = strings.Replace(newParams, e, godista.replacePath(e), 1)
 					}
-					newParams = strings.Replace(newParams, e, godista.replacePath(e), 1)
+				} else {
+					Error.Println("Can not find suitable params")
+					os.Exit(1)
 				}
 
 				Trace.Println("New Params:", newParams)
