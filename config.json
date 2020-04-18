@@ -12,19 +12,22 @@
         "name": "edit",
         "cmd": "gedit",
         "extraParam": "",
-        "params": "^([\\S]+)"
+        "params": "^([\\S]+)",
+        "wait": false
       },
       {
         "name": "explore",
         "cmd": "exploreCommand",
         "extraParam": "",
-        "params": "^([\\S]+)"
+        "params": "^([\\S]+)",
+        "wait": false
       },
       {
         "name": "diff",
         "cmd": "diffCommand",
         "extraParam": "",
-        "params": "^([\\S]+)[ ]+([\\S]+)"
+        "params": "^([\\S]+)[ ]+([\\S]+)",
+        "wait": true
       }
     ]
   }

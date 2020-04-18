@@ -49,6 +49,7 @@ type AppCfg struct {
 	Cmd        string `json:"cmd"`
 	ExtraParam string `json:"extraParam"`
 	Params     string `json:"params"`
+	Wait       bool   `json:"wait"`
 }
 
 type Config struct {
