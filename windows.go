@@ -3,11 +3,7 @@
 package main
 
 import (
-<<<<<<< HEAD
-=======
 	"bytes"
-	"fmt"
->>>>>>> Added an option to wait for the command to finish and get the output
 	"net"
 	"os/exec"
 	"strings"
