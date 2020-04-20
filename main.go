@@ -489,13 +489,16 @@ func main() {
 		}
 		fmt.Fprintf(conn, godista.currentApp.Name+" "+godista.currentApp.ExtraParam+newParams+"\n")
 		Trace.Println("Sent")
-		status, err := bufio.NewReader(conn).ReadString('\n')
-		if err == nil {
-			fmt.Println(status)
-		} else {
-			if err != io.EOF {
-				Error.Println("Network error:", err)
+		tmp := make([]byte, 256)
+		for {
+			_, err = conn.Read(tmp)
+			if err != nil {
+				if err != io.EOF {
+					Error.Println("read error:", err)
+				}
+				break
 			}
+			fmt.Println(string(tmp))
 		}
 	}
 }
