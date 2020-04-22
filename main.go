@@ -62,6 +62,7 @@ type Godista struct {
 	conf       Config
 	ip         string
 	currentApp *AppCfg
+	configPath string
 }
 
 var (
@@ -251,11 +252,21 @@ func (godista *Godista) IPMenu(r *bufio.Reader) {
 
 }
 
+func (godista *Godista) ReloadConfig() {
+	err := godista.ParseConfig(true, godista.configPath)
+	if err != nil {
+		Error.Println("Exiting")
+		os.Exit(1)
+	}
+
+}
+
 func (godista *Godista) MainMenu(r *bufio.Reader) {
 	fmt.Println("\n------------------------------------")
 	fmt.Println("Main Menu\n")
 	fmt.Println("0) Renew IP Address")
-	fmt.Println("1) Exit")
+	fmt.Println("1) Reload Config file")
+	fmt.Println("2) Exit")
 	fmt.Println("")
 	fmt.Println("Select Option?")
 	text, _ := r.ReadString('\n')
@@ -267,6 +278,10 @@ func (godista *Godista) MainMenu(r *bufio.Reader) {
 	}
 
 	if text == "1" {
+		godista.ReloadConfig()
+	}
+
+	if text == "2" {
 		os.Exit(0)
 	}
 
@@ -295,7 +310,6 @@ func addGodistaAliasFile(fileName string) {
 		Error.Println("failed seeking file:", err)
 		os.Exit(1)
 	}
-
 
 	_, err = file.WriteString(GODISTA_BASHRC_INSTALL)
 	if err != nil {
@@ -389,6 +403,7 @@ func main() {
 
 	InitLogs(vt, vi, vw, os.Stderr)
 
+	godista.configPath = *optConfigPath
 	err = godista.ParseConfig(*optServer, *optConfigPath)
 	if err != nil {
 		Error.Println("Exiting")
